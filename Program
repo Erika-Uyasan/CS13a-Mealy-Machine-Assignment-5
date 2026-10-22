@@ -1,0 +1,54 @@
+class MealyMachine:
+    def __init__(self):
+        self.q0 = 'q0'
+        
+        # State Transition Function: delta(current_state, symbol) -> next_state
+        self.delta = {
+            'q0': {'/': 'q1',     '*': 'q_trap', 'a': 'q_trap'},
+            'q1': {'/': 'q_trap', '*': 'q2',     'a': 'q_trap'},
+            'q2': {'/': 'q2',     '*': 'q3',     'a': 'q2'},
+            'q3': {'/': 'q4',     '*': 'q3',     'a': 'q2'},
+            'q4': {'/': 'q_trap', '*': 'q_trap', 'a': 'q_trap'},
+            'q_trap': {'/': 'q_trap', '*': 'q_trap', 'a': 'q_trap'},
+        }
+        
+        # Output Function: lambda_func(current_state, symbol) -> output (0 or 1)
+        self.lambda_func = {
+            'q0': {'/': 0, '*': 0, 'a': 0},
+            'q1': {'/': 0, '*': 0, 'a': 0},
+            'q2': {'/': 0, '*': 0, 'a': 0},
+            'q3': {'/': 1, '*': 0, 'a': 0},  # Transition q3 --'/'--> q4 yields 1
+            'q4': {'/': 0, '*': 0, 'a': 0},
+            'q_trap': {'/': 0, '*': 0, 'a': 0},
+        }
+
+    def process(self, input_string):
+        current_state = self.q0
+        last_output = 0
+
+        for char in input_string:
+            # Map any non-delimiter character to symbol 'a'
+            symbol = char if char in ['/', '*'] else 'a'
+            
+            # Look up output and next state based on the 6-tuple transition tables
+            last_output = self.lambda_func[current_state][symbol]
+            current_state = self.delta[current_state][symbol]
+
+        # String is accepted if the final transition yielded 1 and landed in q4
+        is_accepted = (last_output == 1 and current_state == 'q4')
+        return is_accepted, current_state
+
+
+if __name__ == "__main__":
+    machine = MealyMachine()
+    print("=== Mealy Machine C-Style Comment Checker ===")
+    print("Enter any string to test. Type 'exit' to quit.\n")
+
+    while True:
+        user_input = input("Enter string: ")
+        if user_input.lower() == 'exit':
+            break
+
+        accepted, final_state = machine.process(user_input)
+        status = "ACCEPTED" if accepted else "REJECTED"
+        print(f"Result: {status} | Final State: {final_state}\n")
